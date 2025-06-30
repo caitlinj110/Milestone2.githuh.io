@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Book Search</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style2.css"/>
+ <link id="body_font" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav>
+  <a href="index.html">Home</a> |
+  <a href="bookshelf.html">My Bookshelf</a>
+</nav>
+<h1>Book Search</h1>
+<input type="text" id="searchInput" placeholder="Enter search terms" />
+<button id="searchBtn">Search</button>
+<div id="pagingControls"></div>
+<div id="results"></div>
+
+<div class="container1">
+  <h1>My Book JSON Project</h1>
+  </div>
+
+
+  <div class="container2"> 
+  <p><strong>Name: </strong>Caitlin Johnson</p>
+  <p><strong>Site Description:</strong> This website shows book data using JSON and jQuery.</p>
+  <p><strong>Affiliation:</strong> Kennesaw State University</p>
+  <p><strong>Course:</strong> IT 4403 - Advanced Web Development</p>
+  <p><a href="http://ccse.kennesaw.edu/it" target="_blank">Visit CCSE Department Website</a></p>
+</div>
+
+<div class="container3"> 
+  <h2>Project Milestones</h2>
+  <ul>
+    <li><a href="MileStone1_Display.html">Milestone 1 -View Single Book</a></li>
+    <li><a href="Milestone1_Display_All_Books.html">Milestone 1 - View Book List</a></li>
+    <li><a href="bookshelf.html">Milestone 2 - Bookself</a></li>
+    <li><a href="#">Milestone 3 - Unavailable</a></li>
+    <li><a href="#">Milestone 4 - Unavailable</a></li>
+  </ul>
+
+<script>
+  const resultsPerPage = 10;
+  let currentPage = 1;
+  let currentSearchTerm = '';
+  let totalItems = 0;
+
+  function fetchBooks(term, page = 1) {
+    const startIndex = (page - 1) * resultsPerPage;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(term)}&startIndex=${startIndex}&maxResults=${resultsPerPage}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        totalItems = data.totalItems || 0;
+        displayResults(data.items || []);
+        displayPaging();
+      })
+      .catch(err => {
+        document.getElementById('results').innerText = 'Error fetching books';
+        console.error(err);
+      });
+  }
+
+  function displayResults(books) {
+    const container = document.getElementById('results');
+    if (books.length === 0) {
+      container.innerHTML = '<p>No books found.</p>';
+      return;
+    }
+    container.innerHTML = books.map(book => {
+      const info = book.volumeInfo;
+      return `
+        <div class="book">
+          <a href="details.html?id=${book.id}"><h3>${info.title}</h3></a>
+          <img src="${info.imageLinks?.thumbnail || ''}" alt="Cover" />
+        </div>
+      `;
+    }).join('');
+  }
+
+  function displayPaging() {
+    const pagingDiv = document.getElementById('pagingControls');
+    const totalPages = Math.min(Math.ceil(totalItems / resultsPerPage), 6);
+    if (totalPages <= 1) {
+      pagingDiv.innerHTML = '';
+      return;
+    }
+    let options = '';
+    for (let i = 1; i <= totalPages; i++) {
+      options += `<option value="${i}" ${i === currentPage ? 'selected' : ''}>Page ${i}</option>`;
+    }
+    pagingDiv.innerHTML = `<select id="pageSelect">${options}</select>`;
+
+    document.getElementById('pageSelect').addEventListener('change', (e) => {
+      currentPage = Number(e.target.value);
+      fetchBooks(currentSearchTerm, currentPage);
+    });
+  }
+
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    currentSearchTerm = document.getElementById('searchInput').value.trim();
+    if (!currentSearchTerm) return alert('Please enter a search term.');
+    currentPage = 1;
+    fetchBooks(currentSearchTerm, currentPage);
+  });
+</script>
+</body>
+</html>
